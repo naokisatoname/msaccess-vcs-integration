@@ -205,7 +205,7 @@ Public Function VCS_UsingUcs2() As Boolean
     Dim obj_type_split() As String
     Dim obj_type_name As String
     Dim obj_type_num As Integer
-    
+
     If CurrentDb.QueryDefs.Count > 0 Then
         obj_type_num = acQuery
         obj_name = CurrentDb.QueryDefs(0).name
@@ -235,7 +235,7 @@ Public Function VCS_UsingUcs2() As Boolean
 
     Dim tempFileName As String
     tempFileName = VCS_File.VCS_TempFile()
-    
+
     Application.SaveAsText obj_type_num, obj_name, tempFileName
     fn = FreeFile
     Open tempFileName For Binary Access Read As fn
@@ -247,7 +247,7 @@ Public Function VCS_UsingUcs2() As Boolean
         VCS_UsingUcs2 = False
     End If
     Close fn
-    
+
     Dim FSO As Object
     Set FSO = CreateObject("Scripting.FileSystemObject")
     FSO.DeleteFile (tempFileName)
@@ -259,7 +259,7 @@ Public Function VCS_TempFile(Optional ByVal sPrefix As String = "VBA") As String
     Dim sTmpName As String * 576
     Dim nRet As Long
     Dim sFileName As String
-    
+
     nRet = getTempPath(512, sTmpPath)
     nRet = getTempFileName(sTmpPath, sPrefix, 0, sTmpName)
     If nRet <> 0 Then sFileName = Left$(sTmpName, InStr(sTmpName, vbNullChar) - 1)

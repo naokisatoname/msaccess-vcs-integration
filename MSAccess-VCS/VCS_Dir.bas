@@ -37,7 +37,7 @@ Public Sub VCS_ClearTextFilesFromDir(ByVal Path As String, ByVal Ext As String)
     If Dir$(Path & "*." & Ext) <> vbNullString Then
         FSO.DeleteFile Path & "*." & Ext
     End If
-    
+
 VCS_ClearTextFilesFromDir_noop:
     On Error GoTo 0
 End Sub

@@ -15,7 +15,7 @@ Public Sub VCS_ExportRelation(ByVal rel As DAO.Relation, ByVal filePath As Strin
     OutFile.WriteLine rel.name
     OutFile.WriteLine rel.table
     OutFile.WriteLine rel.foreignTable
-    
+
     Dim f As DAO.Field
     For Each f In rel.Fields
         OutFile.WriteLine "Field = Begin"
@@ -23,7 +23,7 @@ Public Sub VCS_ExportRelation(ByVal rel As DAO.Relation, ByVal filePath As Strin
         OutFile.WriteLine f.ForeignName
         OutFile.WriteLine "End"
     Next
-    
+
     OutFile.Close
 
 End Sub
@@ -35,12 +35,12 @@ Public Sub VCS_ImportRelation(ByVal filePath As String)
     Set InFile = FSO.OpenTextFile(filePath, iomode:=ForReading, create:=False, Format:=TristateFalse)
     Dim rel As DAO.Relation
     Set rel = New DAO.Relation
-    
+
     rel.Attributes = InFile.ReadLine
     rel.name = InFile.ReadLine
     rel.table = InFile.ReadLine
     rel.foreignTable = InFile.ReadLine
-    
+
     Dim f As DAO.Field
     Do Until InFile.AtEndOfStream
         If "Field = Begin" = InFile.ReadLine Then
@@ -54,13 +54,13 @@ Public Sub VCS_ImportRelation(ByVal filePath As String)
             rel.Fields.Append f
         End If
     Loop
-    
+
     InFile.Close
-    
+
     ' Skip if relationship already exists and make a note of it. It was embedded in the table schema.
     On Error GoTo ErrorHandler
     CurrentDb.Relations.Append rel
-    
+
     Exit Sub
 ErrorHandler:
     Select Case Err.Number

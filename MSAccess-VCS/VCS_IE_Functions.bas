@@ -37,15 +37,15 @@ End Sub
 ' Import a database object with optional UTF-8-to-UCS2 conversion.
 Public Sub VCS_ImportObject(ByVal obj_type_num As Integer, ByVal obj_name As String, _
                     ByVal file_path As String, Optional ByVal Ucs2Convert As Boolean = False)
-    
+
     If Not VCS_Dir.VCS_FileExists(file_path) Then Exit Sub
-    
+
     If Ucs2Convert Then
         Dim tempFileName As String
         tempFileName = VCS_File.VCS_TempFile()
         VCS_File.VCS_ConvertUtf8Ucs2 file_path, tempFileName
         Application.LoadFromText obj_type_num, obj_name, tempFileName
-        
+
         Dim FSO As Object
         Set FSO = CreateObject("Scripting.FileSystemObject")
         FSO.DeleteFile tempFileName
@@ -101,7 +101,7 @@ Public Sub VCS_SanitizeTextFiles(ByVal Path As String, ByVal Ext As String)
     fileName = Dir$(Path & "*." & Ext)
     Dim isReport As Boolean
     isReport = False
-    
+
     Do Until Len(fileName) = 0
         DoEvents
         Dim obj_name As String
@@ -111,10 +111,10 @@ Public Sub VCS_SanitizeTextFiles(ByVal Path As String, ByVal Ext As String)
         Set InFile = FSO.OpenTextFile(Path & obj_name & "." & Ext, iomode:=ForReading, create:=False, Format:=TristateFalse)
         Dim OutFile As Object
         Set OutFile = FSO.CreateTextFile(Path & obj_name & ".sanitize", overwrite:=True, Unicode:=False)
-    
+
         Dim getLine As Boolean
         getLine = True
-        
+
         Do Until InFile.AtEndOfStream
             DoEvents
             Dim txt As String
@@ -179,7 +179,7 @@ Public Sub VCS_SanitizeTextFiles(ByVal Path As String, ByVal Ext As String)
 
         Dim thisFile As Object
         Set thisFile = FSO.GetFile(Path & obj_name & ".sanitize")
-        
+
         ' Error Handling to deal with errors caused by Dropbox, VirusScan,
         ' or anything else touching the file.
         Dim ErrCounter As Integer
@@ -187,7 +187,7 @@ Public Sub VCS_SanitizeTextFiles(ByVal Path As String, ByVal Ext As String)
         thisFile.Move (Path & fileName)
         fileName = Dir$()
     Loop
-    
+
     Exit Sub
 ErrorHandler:
     ErrCounter = ErrCounter + 1

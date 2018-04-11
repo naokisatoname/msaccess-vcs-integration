@@ -16,7 +16,7 @@ Public Function VCS_ImportReferences(ByVal obj_path As String) As Boolean
     Dim Minor As Long
     Dim fileName As String
     Dim refName As String
-    
+
     fileName = Dir$(obj_path & "references.csv")
     If Len(fileName) = 0 Then
         VCS_ImportReferences = False
@@ -24,7 +24,7 @@ Public Function VCS_ImportReferences(ByVal obj_path As String) As Boolean
     End If
     Set FSO = CreateObject("Scripting.FileSystemObject")
     Set InFile = FSO.OpenTextFile(obj_path & fileName, iomode:=ForReading, create:=False, Format:=TristateFalse)
-    
+
 On Error GoTo failed_guid
     Do Until InFile.AtEndOfStream
         line = InFile.ReadLine
@@ -46,7 +46,7 @@ On Error GoTo 0
     Set FSO = Nothing
     VCS_ImportReferences = True
     Exit Function
-    
+
 failed_guid:
     If Err.Number = 32813 Then
         'The reference is already present in the access project - so we can ignore the error
@@ -56,7 +56,7 @@ failed_guid:
         'Do we really want to carry on the import with missing references??? - Surely this is fatal
         Resume go_on
     End If
-    
+
 End Function
 
 ' Export References to a CSV
