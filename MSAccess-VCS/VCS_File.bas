@@ -313,3 +313,110 @@ Public Function VCS_TempFile(Optional ByVal sPrefix As String = "VBA") As String
     If nRet <> 0 Then sFileName = Left$(sTmpName, InStr(sTmpName, vbNullChar) - 1)
     VCS_TempFile = sFileName
 End Function
+
+' Convert a file encoding from the specified charaset to UTF-8.
+Public Sub VCS_convFile2Utf8(ByVal Source As String, ByVal charset As String, ByVal dest As String)
+
+    Const adTypeBinary = 1
+    Const adTypeText = 2
+    Const adSaveCreateOverWrite = 2
+
+    Dim inCharset As String
+    Dim outCharset As String
+    Dim Bytes
+
+    inCharset = charset
+    outCharset = "utf-8"
+
+    Dim inStream
+    Dim outStream
+    Dim fileStream
+
+    Set inStream = CreateObject("ADODB.Stream")
+    inStream.Type = adTypeText
+    inStream.charset = inCharset
+    inStream.Open
+
+    Set outStream = CreateObject("ADODB.Stream")
+    outStream.Type = adTypeText
+    outStream.charset = outCharset
+    outStream.Open
+
+    inStream.LoadFromFile Source
+    inStream.CopyTo outStream
+
+    outStream.Position = 0
+    outStream.Type = adTypeBinary
+    outStream.Position = 3
+
+    Bytes = outStream.Read
+
+    inStream.Close
+    Set inStream = Nothing
+
+    outStream.Close
+    Set outStream = Nothing
+
+    Set fileStream = CreateObject("ADODB.Stream")
+    fileStream.Type = adTypeBinary
+    fileStream.Open
+    fileStream.Position = 0
+    fileStream.Write Bytes
+    fileStream.SaveToFile dest, adSaveCreateOverWrite
+    fileStream.Close
+    Set fileStream = Nothing
+End Sub
+
+' Convert a text encoding from the specified charaset to UTF-8.
+Public Sub VCS_convText2Utf8(ByVal Source As String, ByVal charset As String, ByVal dest As String)
+
+    Const adTypeBinary = 1
+    Const adTypeText = 2
+    Const adSaveCreateOverWrite = 2
+
+    Dim inCharset As String
+    Dim outCharset As String
+    Dim Bytes
+
+    inCharset = charset
+    outCharset = "utf-8"
+
+    Dim inStream
+    Dim outStream
+    Dim fileStream
+
+    Set inStream = CreateObject("ADODB.Stream")
+    inStream.Type = adTypeText
+    inStream.charset = inCharset
+    inStream.Open
+
+    Set outStream = CreateObject("ADODB.Stream")
+    outStream.Type = adTypeText
+    outStream.charset = outCharset
+    outStream.Open
+
+    inStream.WriteText Source
+    inStream.Position = 0
+    inStream.CopyTo outStream
+
+    outStream.Position = 0
+    outStream.Type = adTypeBinary
+    outStream.Position = 3
+
+    Bytes = outStream.Read
+
+    inStream.Close
+    Set inStream = Nothing
+
+    outStream.Close
+    Set outStream = Nothing
+
+    Set fileStream = CreateObject("ADODB.Stream")
+    fileStream.Type = adTypeBinary
+    fileStream.Open
+    fileStream.Position = 0
+    fileStream.Write Bytes
+    fileStream.SaveToFile dest, adSaveCreateOverWrite
+    fileStream.Close
+    Set fileStream = Nothing
+End Sub
