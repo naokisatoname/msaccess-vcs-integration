@@ -127,37 +127,85 @@ Private Sub BinClose(ByRef f As BinFile)
     Close f.file_num
 End Sub
 
-
 ' Binary convert a UCS2-little-endian encoded file to UTF-8.
 Public Sub VCS_ConvertUcs2Utf8(ByVal Source As String, ByVal dest As String)
-    Dim f_in As BinFile
-    Dim f_out As BinFile
-    Dim in_low As Integer
-    Dim in_high As Integer
+    ' Dim f_in As BinFile
+    ' Dim f_out As BinFile
+    ' Dim in_low As Integer
+    ' Dim in_high As Integer
 
-    f_in = BinOpen(Source, "r")
-    f_out = BinOpen(dest, "w")
+    ' f_in = BinOpen(Source, "r")
+    ' f_out = BinOpen(dest, "w")
 
-    Do While Not f_in.at_eof
-        in_low = BinRead(f_in)
-        in_high = BinRead(f_in)
-        If in_high = 0 And in_low < &H80 Then
-            ' U+0000 - U+007F   0LLLLLLL
-            BinWrite f_out, in_low
-        ElseIf in_high < &H8 Then
-            ' U+0080 - U+07FF   110HHHLL 10LLLLLL
-            BinWrite f_out, &HC0 + ((in_high And &H7) * &H4) + ((in_low And &HC0) / &H40)
-            BinWrite f_out, &H80 + (in_low And &H3F)
-        Else
-            ' U+0800 - U+FFFF   1110HHHH 10HHHHLL 10LLLLLL
-            BinWrite f_out, &HE0 + ((in_high And &HF0) / &H10)
-            BinWrite f_out, &H80 + ((in_high And &HF) * &H4) + ((in_low And &HC0) / &H40)
-            BinWrite f_out, &H80 + (in_low And &H3F)
-        End If
-    Loop
+    ' Do While Not f_in.at_eof
+    '     in_low = BinRead(f_in)
+    '     in_high = BinRead(f_in)
+    '     If in_high = 0 And in_low < &H80 Then
+    '         ' U+0000 - U+007F   0LLLLLLL
+    '         BinWrite f_out, in_low
+    '     ElseIf in_high < &H8 Then
+    '         ' U+0080 - U+07FF   110HHHLL 10LLLLLL
+    '         BinWrite f_out, &HC0 + ((in_high And &H7) * &H4) + ((in_low And &HC0) / &H40)
+    '         BinWrite f_out, &H80 + (in_low And &H3F)
+    '     Else
+    '         ' U+0800 - U+FFFF   1110HHHH 10HHHHLL 10LLLLLL
+    '         BinWrite f_out, &HE0 + ((in_high And &HF0) / &H10)
+    '         BinWrite f_out, &H80 + ((in_high And &HF) * &H4) + ((in_low And &HC0) / &H40)
+    '         BinWrite f_out, &H80 + (in_low And &H3F)
+    '     End If
+    ' Loop
 
-    BinClose f_in
-    BinClose f_out
+    ' BinClose f_in
+    ' BinClose f_out
+
+    Const adTypeBinary = 1
+    Const adTypeText = 2
+    Const adSaveCreateOverWrite = 2
+
+    Dim inCharset As String
+    Dim outCharset As String
+    Dim Bytes
+
+    inCharset = "utf-16le"
+    outCharset = "utf-8"
+
+    Dim inStream
+    Dim outStream
+    Dim fileStream
+
+    Set inStream = CreateObject("ADODB.Stream")
+    inStream.Type = adTypeText
+    inStream.charset = inCharset
+    inStream.Open
+
+    Set outStream = CreateObject("ADODB.Stream")
+    outStream.Type = adTypeText
+    outStream.charset = outCharset
+    outStream.Open
+
+    inStream.LoadFromFile Source
+    inStream.CopyTo outStream
+
+    outStream.Position = 0
+    outStream.Type = adTypeBinary
+    outStream.Position = 3
+
+    Bytes = outStream.Read
+
+    inStream.Close
+    Set inStream = Nothing
+
+    outStream.Close
+    Set outStream = Nothing
+
+    Set fileStream = CreateObject("ADODB.Stream")
+    fileStream.Type = adTypeBinary
+    fileStream.Open
+    fileStream.Position = 0
+    fileStream.Write Bytes
+    fileStream.SaveToFile dest, adSaveCreateOverWrite
+    fileStream.Close
+    Set fileStream = Nothing
 End Sub
 
 ' Binary convert a UTF-8 encoded file to UCS2-little-endian.
