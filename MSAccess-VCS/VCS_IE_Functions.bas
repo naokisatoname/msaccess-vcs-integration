@@ -29,6 +29,10 @@ Public Sub VCS_ExportObject(ByVal obj_type_num As Integer, ByVal obj_name As Str
         tempFileName = VCS_File.VCS_TempFile()
         Application.SaveAsText obj_type_num, obj_name, tempFileName
         VCS_File.VCS_ConvertUcs2Utf8 tempFileName, file_path
+
+        Dim FSO As Object
+        Set FSO = CreateObject("Scripting.FileSystemObject")
+        FSO.DeleteFile tempFileName
     Else
         Application.SaveAsText obj_type_num, obj_name, file_path
     End If
@@ -62,6 +66,10 @@ End Sub
 ' version control).
 Public Sub VCS_SanitizeTextFiles(ByVal Path As String, ByVal Ext As String)
 
+    Const adTypeBinary = 1
+    Const adTypeText = 2
+    Const adSaveCreateOverWrite = 2
+
     Dim FSO As Object
     Set FSO = CreateObject("Scripting.FileSystemObject")
     '
@@ -81,7 +89,8 @@ Public Sub VCS_SanitizeTextFiles(ByVal Path As String, ByVal Ext As String)
     End If
     '  Ensure that this is the beginning of a block.
     srchPattern = srchPattern & " = Begin"
-'Debug.Print srchPattern
+    'Debug.Print srchPattern
+
     rxBlock.Pattern = srchPattern
     '
     '  Setup Line Matching Regex.
@@ -95,7 +104,8 @@ Public Sub VCS_SanitizeTextFiles(ByVal Path As String, ByVal Ext As String)
         srchPattern = srchPattern & "|PublishOption =1"
     End If
     srchPattern = srchPattern & ")"
-'Debug.Print srchPattern
+    'Debug.Print srchPattern
+
     rxLine.Pattern = srchPattern
     Dim fileName As String
     fileName = Dir$(Path & "*." & Ext)
@@ -107,21 +117,36 @@ Public Sub VCS_SanitizeTextFiles(ByVal Path As String, ByVal Ext As String)
         Dim obj_name As String
         obj_name = Mid$(fileName, 1, InStrRev(fileName, ".") - 1)
 
+        'Dim InFile As Object
+        'Set InFile = FSO.OpenTextFile(Path & obj_name & "." & Ext, iomode:=ForReading, Create:=False, Format:=TristateFalse)
+        'Dim OutFile As Object
+        'Set OutFile = FSO.CreateTextFile(Path & obj_name & ".sanitize", overwrite:=True, Unicode:=False)
+
         Dim InFile As Object
-        Set InFile = FSO.OpenTextFile(Path & obj_name & "." & Ext, iomode:=ForReading, create:=False, Format:=TristateFalse)
+        Set InFile = CreateObject("ADODB.Stream")
+        InFile.Type = adTypeText
+        InFile.charset = "utf-8"
+        InFile.Open
+        InFile.LoadFromFile Path & obj_name & "." & Ext
+
         Dim OutFile As Object
-        Set OutFile = FSO.CreateTextFile(Path & obj_name & ".sanitize", overwrite:=True, Unicode:=False)
+        Set OutFile = CreateObject("ADODB.Stream")
+        OutFile.Type = adTypeText
+        OutFile.charset = "utf-8"
+        OutFile.Open
 
         Dim getLine As Boolean
         getLine = True
 
-        Do Until InFile.AtEndOfStream
+        'Do Until InFile.AtEndOfStream
+        Do Until InFile.EOS
             DoEvents
             Dim txt As String
             '
             ' Check if we need to get a new line of text
             If getLine = True Then
-                txt = InFile.ReadLine
+                'txt = InFile.ReadLine
+                txt = InFile.ReadText(-2)
             Else
                 getLine = True
             End If
@@ -146,8 +171,10 @@ Public Sub VCS_SanitizeTextFiles(ByVal Path As String, ByVal Ext As String)
                 rxIndent.Pattern = rxIndent.Pattern + "\s"
                 '
                 ' Skip lines with deeper indentation
-                Do Until InFile.AtEndOfStream
-                    txt = InFile.ReadLine
+                'Do Until InFile.AtEndOfStream
+                Do Until InFile.EOS
+                    'txt = InFile.ReadLine
+                    txt = InFile.ReadText(-2)
                     If Not rxIndent.Test(txt) Then Exit Do
                 Loop
                 ' We've moved on at least one line so do get a new one
@@ -156,24 +183,48 @@ Public Sub VCS_SanitizeTextFiles(ByVal Path As String, ByVal Ext As String)
             '
             ' skip blocks of code matching block pattern
             ElseIf rxBlock.Test(txt) Then
-                Do Until InFile.AtEndOfStream
-                    txt = InFile.ReadLine
+                'Do Until InFile.AtEndOfStream
+                Do Until InFile.EOS
+                    'txt = InFile.ReadLine
+                    txt = InFile.ReadText(-2)
                     If InStr(txt, "End") Then Exit Do
                 Loop
             ElseIf InStr(1, txt, "Begin Report") = 1 Then
                 isReport = True
-                OutFile.WriteLine txt
+                'OutFile.WriteLine txt
+                OutFile.WriteText txt, 1
             ElseIf isReport = True And (InStr(1, txt, "    Right =") Or InStr(1, txt, "    Bottom =")) Then
                 'skip line
                 If InStr(1, txt, "    Bottom =") Then
                     isReport = False
                 End If
             Else
-                OutFile.WriteLine txt
+                'OutFile.WriteLine txt
+                OutFile.WriteText txt, 1
             End If
         Loop
+
+        OutFile.Position = 0
+        OutFile.Type = adTypeBinary
+        OutFile.Position = 3
+
+        Dim Lines
+        Lines = OutFile.Read
+
         OutFile.Close
         InFile.Close
+        Set OutFile = Nothing
+        Set InFile = Nothing
+
+        Dim WriteOutFile As Object
+        Set WriteOutFile = CreateObject("ADODB.Stream")
+        WriteOutFile.Type = adTypeBinary
+        WriteOutFile.Open
+        WriteOutFile.Position = 0
+        WriteOutFile.Write Lines
+        WriteOutFile.SaveToFile Path & obj_name & ".sanitize"
+        WriteOutFile.Close
+        Set WriteOutFile = Nothing
 
         FSO.DeleteFile (Path & fileName)
 

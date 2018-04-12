@@ -30,7 +30,7 @@ Private Sub writeTextToFile(ByVal text As String, ByVal file_path As String)
     ' Set FSO = Nothing
     ' Set oFile = Nothing
 
-    VCS_convText2Utf8 text, "shift_jis", file_path
+    VCS_File.VCS_convText2Utf8 text, "shift_jis", file_path
 End Sub
 
 Private Function readFromTextFile(ByVal file_path As String) As String
