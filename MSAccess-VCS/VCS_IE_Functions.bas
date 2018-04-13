@@ -24,18 +24,51 @@ Public Sub VCS_ExportObject(ByVal obj_type_num As Integer, ByVal obj_name As Str
                     ByVal file_path As String, Optional ByVal Ucs2Convert As Boolean = False)
 
     VCS_Dir.VCS_MkDirIfNotExist Left$(file_path, InStrRev(file_path, "\"))
-    If Ucs2Convert Then
-        Dim tempFileName As String
-        tempFileName = VCS_File.VCS_TempFile()
-        Application.SaveAsText obj_type_num, obj_name, tempFileName
-        VCS_File.VCS_ConvertUcs2Utf8 tempFileName, file_path
 
-        Dim FSO As Object
-        Set FSO = CreateObject("Scripting.FileSystemObject")
-        FSO.DeleteFile tempFileName
+    Dim tempFileName As String
+    tempFileName = VCS_File.VCS_TempFile()
+
+    Dim ErrCounter As Integer
+    ErrCounter = 0
+
+    On Error GoTo ErrorHandler
+    Application.SaveAsText obj_type_num, obj_name, tempFileName
+
+    If Ucs2Convert Then
+'        Dim tempFileName As String
+'        tempFileName = VCS_File.VCS_TempFile()
+'        Application.SaveAsText obj_type_num, obj_name, tempFileName
+        VCS_File.VCS_ConvertUcs2Utf8 tempFileName, file_path
+'
+'        Dim FSO As Object
+'        Set FSO = CreateObject("Scripting.FileSystemObject")
+'        FSO.DeleteFile tempFileName
     Else
-        Application.SaveAsText obj_type_num, obj_name, file_path
+'        Application.SaveAsText obj_type_num, obj_name, file_path
+'
+        VCS_File.VCS_convFile2Utf8 tempFileName, "shift_jis", file_path
     End If
+
+    Dim FSO As Object
+    Set FSO = CreateObject("Scripting.FileSystemObject")
+    FSO.DeleteFile tempFileName
+    Set FSO = Nothing
+
+    Exit Sub
+
+ErrorHandler:
+    ErrCounter = ErrCounter + 1
+    If ErrCounter = 20 Then
+        MsgBox "Unkonw error occurred and " & obj_name & " has been skipped."
+        Exit Sub
+    End If
+    Select Case Err.Number
+        Case 2220 ' Runtime error 2220
+            DoEvents
+            Sleep 100
+            Resume
+        End Select
+    Resume Next
 End Sub
 
 ' Import a database object with optional UTF-8-to-UCS2 conversion.
