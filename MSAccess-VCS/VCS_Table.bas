@@ -212,6 +212,40 @@ Public Sub VCS_ExportTableData(ByVal tbl_name As String, ByVal obj_path As Strin
     FSO.DeleteFile tempFileName
 End Sub
 
+' Save a Table Definition as XML file
+Public Sub VCS_ExportTableDataXML(ByVal tbl_name As String, ByVal obj_path As String)
+    Dim fileName As String
+    Dim oXMLFile As Object
+    Dim xmlElement As Object
+
+    fileName = obj_path & tbl_name & ".xml"
+
+    ' Checks first
+    If Not TableExists(tbl_name) Then
+        Debug.Print "Error: Table " & tbl_name & " missing"
+        Exit Sub
+    End If
+
+    Application.ExportXML _
+    ObjectType:=acExportTable, _
+    DataSource:=tbl_name, _
+    DataTarget:=fileName, _
+    OtherFlags:=acEmbedSchema
+
+    ' Remove the generated date field to make diff easier.
+    Set oXMLFile = CreateObject("Microsoft.XMLDOM")
+    oXMLFile.async = False
+    oXMLFile.validateOnParse = False
+    oXMLFile.Load (fileName)
+
+    Set xmlElement = oXMLFile.SelectSingleNode("/root/dataroot")
+    If Not xmlElement Is Nothing Then
+        xmlElement.removeAttribute ("generated")
+        oXMLFile.Save (fileName)
+    End If
+
+End Sub
+
 Public Sub VCS_ImportLinkedTable(ByVal tblName As String, ByRef obj_path As String)
     Dim Db As DAO.Database
     Dim FSO As Object
@@ -341,4 +375,20 @@ Public Sub VCS_ImportTableData(ByVal tblName As String, ByVal obj_path As String
     rs.Close
     InFile.Close
     FSO.DeleteFile tempFileName
+End Sub
+
+' Import Table Data from XML files in `source\tables`.
+Public Sub VCS_ImportTableDataXML(ByVal tblName As String, ByVal obj_path As String)
+    Dim fileName As String
+
+    fileName = obj_path & tblName & ".xml"
+
+    If TableExists(tblName) Then
+        Db.Execute "DELETE FROM [" & tblName & "];"
+    End If
+
+    Application.ImportXML _
+    DataSource:=fileName, _
+    ImportOptions:=acAppendData
+
 End Sub

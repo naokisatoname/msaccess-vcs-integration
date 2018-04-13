@@ -23,6 +23,8 @@ Private Const ExportModules As Boolean = True
 Private Const ExportTables As Boolean = True
 'export/import all Queries as plain SQL text
 Private Const HandleQueriesAsSQL As Boolean = True
+' Export/Import all Table Data as XML format
+Private Const HandleTableDataAsXML As Boolean = True
 
 'returns true if named module is NOT part of the VCS code
 Private Function IsNotVCS(ByVal name As String) As Boolean
@@ -150,6 +152,7 @@ Public Sub ExportAllSource()
         obj_path = source_path & "tables\"
         VCS_Dir.VCS_MkDirIfNotExist Left$(obj_path, InStrRev(obj_path, "\"))
         VCS_Dir.VCS_ClearTextFilesFromDir obj_path, "txt"
+        VCS_Dir.VCS_ClearTextFilesFromDir obj_path, "xml"
 
         Dim td As DAO.TableDef
         Dim tds As DAO.TableDefs
@@ -183,15 +186,26 @@ Public Sub ExportAllSource()
                     VCS_Table.VCS_ExportTableDef td.name, obj_path
                     If INCLUDE_TABLES = "*" Then
                         DoEvents
-                        VCS_Table.VCS_ExportTableData CStr(td.name), source_path & "tables\"
-                        If Len(Dir$(source_path & "tables\" & td.name & ".txt")) > 0 Then
-                            obj_data_count = obj_data_count + 1
+                        If HandleTableDataAsXML Then
+                            VCS_Table.VCS_ExportTableDataXML CStr(td.name), source_path & "tables\"
+                            If Len(Dir$(source_path & "tables\" & td.name & ".xml")) > 0 Then
+                                obj_data_count = obj_data_count + 1
+                            End If
+                        Else
+                            VCS_Table.VCS_ExportTableData CStr(td.name), source_path & "tables\"
+                            If Len(Dir$(source_path & "tables\" & td.name & ".txt")) > 0 Then
+                                obj_data_count = obj_data_count + 1
+                            End If
                         End If
                     ElseIf (Len(Replace(INCLUDE_TABLES, " ", vbNullString)) > 0) And INCLUDE_TABLES <> "*" Then
                         DoEvents
                         On Error GoTo Err_TableNotFound
-                        If InCollection(IncludeTablesCol,td.name) Then
-                            VCS_Table.VCS_ExportTableData CStr(td.name), source_path & "tables\"
+                        If InCollection(IncludeTablesCol, td.name) Then
+                            If HandleTableDataAsXML Then
+                                VCS_Table.VCS_ExportTableDataXML CStr(td.name), source_path & "tables\"
+                            Else
+                                VCS_Table.VCS_ExportTableData CStr(td.name), source_path & "tables\"
+                            End If
                             obj_data_count = obj_data_count + 1
                         End If
 Err_TableNotFound:
@@ -350,14 +364,22 @@ Public Sub ImportAllSource()
 
     ' NOW we may load data
     obj_path = source_path & "tables\"
-    fileName = Dir$(obj_path & "*.txt")
+    If HandleTableDataAsXML Then
+        fileName = Dir$(obj_path & "*.xml")
+    Else
+        fileName = Dir$(obj_path & "*.txt")
+    End If
     If Len(fileName) > 0 Then
         Debug.Print VCS_String.VCS_PadRight("Importing tables...", 24);
         obj_count = 0
         Do Until Len(fileName) = 0
             DoEvents
             obj_name = Mid$(fileName, 1, InStrRev(fileName, ".") - 1)
-            VCS_Table.VCS_ImportTableData CStr(obj_name), obj_path
+            If HandleTableDataAsXML Then
+                VCS_Table.VCS_ImportTableDataXML CStr(obj_name), obj_path
+            Else
+                VCS_Table.VCS_ImportTableData CStr(obj_name), obj_path
+            End If
             obj_count = obj_count + 1
             fileName = Dir$()
         Loop
