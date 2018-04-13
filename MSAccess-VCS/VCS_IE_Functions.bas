@@ -46,7 +46,7 @@ Public Sub VCS_ExportObject(ByVal obj_type_num As Integer, ByVal obj_name As Str
     Else
 '        Application.SaveAsText obj_type_num, obj_name, file_path
 '
-        VCS_File.VCS_convFile2Utf8 tempFileName, "shift_jis", file_path
+        VCS_File.VCS_convFile2Utf8 tempFileName, VCSDefaultCharset, file_path
     End If
 
     Dim FSO As Object

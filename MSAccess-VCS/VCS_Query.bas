@@ -18,7 +18,7 @@ Public Sub ExportQueryAsSQL(qry As QueryDef, ByVal file_path As String, _
 End Sub
 
 Private Sub writeTextToFile(ByVal text As String, ByVal file_path As String)
-    
+
     ' Dim FSO As Object
     ' Set FSO = CreateObject("Scripting.FileSystemObject")
     ' Dim oFile As Object
@@ -26,11 +26,11 @@ Private Sub writeTextToFile(ByVal text As String, ByVal file_path As String)
 
     ' oFile.WriteLine text
     ' oFile.Close
-    
+
     ' Set FSO = Nothing
     ' Set oFile = Nothing
 
-    VCS_File.VCS_convText2Utf8 text, "shift_jis", file_path
+    VCS_File.VCS_convText2Utf8 text, VCSDefaultCharset, file_path
 End Sub
 
 Private Function readFromTextFile(ByVal file_path As String) As String

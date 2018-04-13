@@ -26,6 +26,9 @@ Private Const HandleQueriesAsSQL As Boolean = True
 ' Export/Import all Table Data as XML format
 Private Const HandleTableDataAsXML As Boolean = True
 
+' Default character set; used when converting to UTF-8 for non UCS2 files
+Public Const VCSDefaultCharset = "shift_jis"
+
 'returns true if named module is NOT part of the VCS code
 Private Function IsNotVCS(ByVal name As String) As Boolean
     If name <> "VCS_ImportExport" And _
