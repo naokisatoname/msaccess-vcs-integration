@@ -303,14 +303,19 @@ End Function
 
 ' Generate Random / Unique tempprary file name.
 Public Function VCS_TempFile(Optional ByVal sPrefix As String = "VBA") As String
-    Dim sTmpPath As String * 512
-    Dim sTmpName As String * 576
-    Dim nRet As Long
+    'Dim sTmpPath As String * 512
+    'Dim sTmpName As String * 576
+    'Dim nRet As Long
     Dim sFileName As String
-
-    nRet = getTempPath(512, sTmpPath)
-    nRet = getTempFileName(sTmpPath, sPrefix, 0, sTmpName)
-    If nRet <> 0 Then sFileName = Left$(sTmpName, InStr(sTmpName, vbNullChar) - 1)
+    '
+    'nRet = getTempPath(512, sTmpPath)
+    'nRet = getTempFileName(sTmpPath, sPrefix, 0, sTmpName)
+    'If nRet <> 0 Then sFileName = Left$(sTmpName, InStr(sTmpName, vbNullChar) - 1)
+    'VCS_TempFile = sFileName
+    Dim FSO As Object
+    Set FSO = CreateObject("Scripting.FileSystemObject")
+    sFileName = FSO.GetSpecialFolder(2) & "\" & FSO.GetTempName
+    Set FSO = Nothing
     VCS_TempFile = sFileName
 End Function
 
