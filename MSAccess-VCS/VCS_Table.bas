@@ -60,6 +60,9 @@ Err_LinkedTable_Fin:
     'save files as .odbc
     VCS_File.VCS_ConvertUcs2Utf8 tempFilePath, obj_path & tbl_name & ".LNKD"
 
+    FSO.DeleteFile tempFilePath
+    Set FSO = Nothing
+
     Exit Sub
 
 Err_LinkedTable:
@@ -135,10 +138,13 @@ Private Function TableExportSql(ByVal tbl_name As String) As String
 
     Count = 0
     For Each fieldObj In rs.Fields
-        DoEvents
-        If Count > 0 Then VCS_String.VCS_Sb_Append sb, ", "
-        VCS_String.VCS_Sb_Append sb, "[" & fieldObj.name & "]"
-        Count = Count + 1
+        If VarType(fieldObj.Value) < vbArray And _
+                Not VarType(fieldObj.Value) = vbObject Then
+            DoEvents
+            If Count > 0 Then VCS_String.VCS_Sb_Append sb, ", "
+            VCS_String.VCS_Sb_Append sb, "[" & fieldObj.name & "]"
+            Count = Count + 1
+        End If
     Next
 
     TableExportSql = VCS_String.VCS_Sb_Get(sb)
@@ -193,6 +199,10 @@ Public Sub VCS_ExportTableData(ByVal tbl_name As String, ByVal obj_path As Strin
                 Value = vbNullString
             ElseIf VarType(Value) = vbBoolean Then
                 Value = CInt(Value)
+            ElseIf VarType(Value) = vbObject Then
+                Value = "vbObject"
+            ElseIf VarType(Value) >= vbArray Then
+                Value = "vbArray"
             Else
                 Value = Replace(Value, "\", "\\")
                 Value = Replace(Value, vbCrLf, "\n")
